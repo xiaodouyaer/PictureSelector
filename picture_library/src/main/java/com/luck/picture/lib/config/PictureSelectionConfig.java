@@ -8,6 +8,7 @@ import com.luck.picture.lib.R;
 import com.luck.picture.lib.entity.LocalMedia;
 import com.luck.picture.lib.tools.PictureFileUtils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
  * data：2017/5/24
  */
 
-public final class PictureSelectionConfig implements Parcelable {
+public final class PictureSelectionConfig implements Parcelable, Serializable {
     public int mimeType;
     public boolean camera;
     public String outputCameraPath;
@@ -44,6 +45,9 @@ public final class PictureSelectionConfig implements Parcelable {
     public float sizeMultiplier;
     public int cropWidth;
     public int cropHeight;
+    public int zoomWidth;
+    public int zoomHeight;
+    public int pictureSize;
     public boolean zoomAnim;
     public boolean isCompress;
     public boolean isCamera;
@@ -88,6 +92,9 @@ public final class PictureSelectionConfig implements Parcelable {
         aspect_ratio_y = 0;
         cropWidth = 0;
         cropHeight = 0;
+        zoomWidth = 0;
+        zoomHeight = 0;
+        pictureSize = 0;
         isCamera = true;
         isGif = false;
         enablePreview = true;
@@ -208,6 +215,9 @@ public final class PictureSelectionConfig implements Parcelable {
         this.sizeMultiplier = in.readFloat();
         this.cropWidth = in.readInt();
         this.cropHeight = in.readInt();
+        this.zoomWidth = in.readInt();
+        this.zoomHeight = in.readInt();
+        this.pictureSize = in.readInt();
         this.zoomAnim = in.readByte() != 0;
         this.isCompress = in.readByte() != 0;
         this.isCamera = in.readByte() != 0;

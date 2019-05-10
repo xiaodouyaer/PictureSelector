@@ -12,6 +12,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.luck.picture.lib.config.PictureMimeType;
+import com.luck.picture.lib.config.PictureSelectionConfig;
 import com.luck.picture.lib.entity.LocalMedia;
 import com.luck.picture.lib.tools.PictureFileUtils;
 
@@ -28,6 +29,8 @@ public class Luban implements Handler.Callback {
     private static final int MSG_COMPRESS_START = 1;
     private static final int MSG_COMPRESS_ERROR = 2;
     private static final int MSG_COMPRESS_MULTIPLE_SUCCESS = 3;
+    private PictureSelectionConfig config;
+    private AbsEngine engine;
     private String mTargetDir;
     private List<String> mPaths;
     private List<LocalMedia> medias;
@@ -41,9 +44,11 @@ public class Luban implements Handler.Callback {
         this.mPaths = builder.mPaths;
         this.medias = builder.medias;
         this.context = builder.context;
+        this.engine = builder.engine;
         this.mTargetDir = builder.mTargetDir;
         this.mCompressListener = builder.mCompressListener;
         this.mLeastCompressSize = builder.mLeastCompressSize;
+        config = PictureSelectionConfig.getInstance();
         mHandler = new Handler(Looper.getMainLooper(), this);
     }
 
@@ -128,14 +133,17 @@ public class Luban implements Handler.Callback {
                         try {
                             index++;
                             mHandler.sendMessage(mHandler.obtainMessage(MSG_COMPRESS_START));
+                            boolean isSpecificCompress = config.zoomWidth > 0 || config.zoomHeight > 0 || config.pictureSize > 0;
                             File result = Checker.isNeedCompress(mLeastCompressSize, path) ?
-                                    new Engine(path, getImageCacheFile(context, Checker.checkSuffix(path))).compress() :
+                                    (engine != null && isSpecificCompress ?
+                                            engine.setSrcImg(path).setTagImg(getImageCacheFile(context, Checker.checkSuffix(path))).compress() :
+                                            new Engine(path, getImageCacheFile(context, Checker.checkSuffix(path))).compress()) :
                                     new File(path);
                             if (medias != null && medias.size() > 0) {
                                 LocalMedia media = medias.get(index);
                                 String path = result.getAbsolutePath();
                                 boolean eqHttp = PictureMimeType.isHttp(path);
-                                media.setCompressed(eqHttp ? false : true);
+                                media.setCompressed(!eqHttp);
                                 media.setCompressPath(eqHttp ? "" : result.getAbsolutePath());
                                 boolean isLast = index == medias.size() - 1;
                                 if (isLast) {
@@ -161,8 +169,11 @@ public class Luban implements Handler.Callback {
      */
     @WorkerThread
     private File get(String path, Context context) throws IOException {
+        boolean isSpecificCompress = config.zoomWidth > 0 || config.zoomHeight > 0 || config.pictureSize > 0;
         return Checker.isNeedCompress(mLeastCompressSize, path) ?
-                new Engine(path, getImageCacheFile(context, Checker.checkSuffix(path))).compress() :
+                (isSpecificCompress ?
+                        new SpecificSizeEngine(path, getImageCacheFile(context, Checker.checkSuffix(path))).compress() :
+                        new Engine(path, getImageCacheFile(context, Checker.checkSuffix(path))).compress()) :
                 new File(path);
     }
 
@@ -174,8 +185,11 @@ public class Luban implements Handler.Callback {
         while (iterator.hasNext()) {
             String path = iterator.next();
             if (Checker.isImage(path)) {
+                boolean isSpecificCompress = config.zoomWidth > 0 || config.zoomHeight > 0 || config.pictureSize > 0;
                 File result = Checker.isNeedCompress(mLeastCompressSize, path) ?
-                        new Engine(path, getImageCacheFile(context, Checker.checkSuffix(path))).compress() :
+                        (isSpecificCompress ?
+                                new SpecificSizeEngine(path, getImageCacheFile(context, Checker.checkSuffix(path))).compress() :
+                                new Engine(path, getImageCacheFile(context, Checker.checkSuffix(path))).compress()) :
                         new File(path);
                 results.add(result);
             }
@@ -205,6 +219,7 @@ public class Luban implements Handler.Callback {
 
     public static class Builder {
         private Context context;
+        private AbsEngine engine;
         private String mTargetDir;
         private List<String> mPaths;
         private List<LocalMedia> medias;
@@ -248,6 +263,11 @@ public class Luban implements Handler.Callback {
 
         public Builder setCompressListener(OnCompressListener listener) {
             this.mCompressListener = listener;
+            return this;
+        }
+
+        public Builder setEngine(AbsEngine engine) {
+            this.engine = engine;
             return this;
         }
 

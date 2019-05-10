@@ -7,12 +7,12 @@ import android.support.annotation.IntRange;
 import android.support.annotation.StyleRes;
 import android.support.v4.app.Fragment;
 
-import com.luck.picture.lib.config.PictureConfig;
+import com.luck.picture.lib.compress.AbsEngine;
 import com.luck.picture.lib.config.PictureSelectionConfig;
 import com.luck.picture.lib.entity.LocalMedia;
+import com.luck.picture.lib.exception.ValueVerifyException;
 import com.luck.picture.lib.tools.DoubleUtils;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +28,7 @@ import java.util.List;
 public class PictureSelectionModel {
     private PictureSelectionConfig selectionConfig;
     private PictureSelector selector;
+    private AbsEngine customEngine;
 
     public PictureSelectionModel(PictureSelector selector, int mimeType) {
         this.selector = selector;
@@ -198,6 +199,34 @@ public class PictureSelectionModel {
     public PictureSelectionModel cropWH(int cropWidth, int cropHeight) {
         selectionConfig.cropWidth = cropWidth;
         selectionConfig.cropHeight = cropHeight;
+        return this;
+    }
+
+    /**
+     * current set max width is 1080 and max height is 1920,
+     * because too larger value will give rise to OOM
+     *
+     * @param zoomWidth  zoom width
+     * @param zoomHeight zoom height
+     * @return
+     */
+    public PictureSelectionModel zoomWH(@IntRange(from = 100, to = 1080) int zoomWidth,
+                                        @IntRange(from = 100, to = 1920) int zoomHeight) {
+        if (zoomWidth > zoomHeight) {
+            throw new ValueVerifyException("zoomWidth must less than zoomHeight!!!");
+        }
+        selectionConfig.zoomWidth = zoomWidth;
+        selectionConfig.zoomHeight = zoomHeight;
+        return this;
+    }
+
+
+    /**
+     * @param pictureSize picture size
+     * @return
+     */
+    public PictureSelectionModel specificSize(int pictureSize) {
+        selectionConfig.pictureSize = pictureSize;
         return this;
     }
 
@@ -399,6 +428,15 @@ public class PictureSelectionModel {
     }
 
     /**
+     * @param customEngine 自定义压缩引擎
+     * @return
+     */
+    public PictureSelectionModel setCustomCompress(AbsEngine customEngine) {
+        this.customEngine = customEngine;
+        return this;
+    }
+
+    /**
      * Start to select media and wait for result.
      *
      * @param requestCode Identity of the request Activity or Fragment.
@@ -410,6 +448,9 @@ public class PictureSelectionModel {
                 return;
             }
             Intent intent = new Intent(activity, PictureSelectorActivity.class);
+            if (customEngine != null) {
+                intent.putExtra("customEngine", customEngine);
+            }
             Fragment fragment = selector.getFragment();
             if (fragment != null) {
                 fragment.startActivityForResult(intent, requestCode);

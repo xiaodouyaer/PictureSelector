@@ -14,6 +14,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.text.TextUtils;
 
+import com.luck.picture.lib.compress.AbsEngine;
 import com.luck.picture.lib.compress.Luban;
 import com.luck.picture.lib.compress.OnCompressListener;
 import com.luck.picture.lib.config.PictureConfig;
@@ -57,6 +58,7 @@ public class PictureBaseActivity extends FragmentActivity {
     protected PictureDialog dialog;
     protected PictureDialog compressDialog;
     protected List<LocalMedia> selectionMedias;
+    protected AbsEngine customEngine;
 
     /**
      * 是否使用沉浸式，子类复写该方法来确定是否采用沉浸式
@@ -212,6 +214,7 @@ public class PictureBaseActivity extends FragmentActivity {
                         @Override
                         public List<File> apply(@NonNull List<LocalMedia> list) throws Exception {
                             List<File> files = Luban.with(mContext)
+                                    .setEngine(customEngine)
                                     .setTargetDir(config.compressSavePath)
                                     .ignoreBy(config.minimumCompressSize)
                                     .loadLocalMedia(list).get();
@@ -231,6 +234,7 @@ public class PictureBaseActivity extends FragmentActivity {
         } else {
             Luban.with(this)
                     .loadLocalMedia(result)
+                    .setEngine(customEngine)
                     .ignoreBy(config.minimumCompressSize)
                     .setTargetDir(config.compressSavePath)
                     .setCompressListener(new OnCompressListener() {

@@ -27,6 +27,7 @@ import android.widget.TextView;
 
 import com.luck.picture.lib.adapter.PictureAlbumDirectoryAdapter;
 import com.luck.picture.lib.adapter.PictureImageGridAdapter;
+import com.luck.picture.lib.compress.AbsEngine;
 import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureMimeType;
 import com.luck.picture.lib.decoration.GridSpacingItemDecoration;
@@ -182,6 +183,7 @@ public class PictureSelectorActivity extends PictureBaseActivity implements View
             setContentView(R.layout.picture_selector);
             initView(savedInstanceState);
         }
+        customEngine = (AbsEngine) getIntent().getSerializableExtra("customEngine");
     }
 
 
